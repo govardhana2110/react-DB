@@ -1,0 +1,30 @@
+{
+  "eslint.packageManager": "yarn",
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/debug.log": true
+  },
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "eslint.format.enable": true,
+  "eslint.alwaysShowStatus": true,
+  "prettier.enable": true,
+  "eslint.trace.server": "messages",
+  "eslint.lintTask.enable": true,
+  "eslint.options": {
+    "ext": ".js,.jsx"
+  },
+  "jest.autoRun": {
+    "watch": false
+    // "onStartup": ["all-tests"],
+    // "onSave": "test-file",
+  }
+}

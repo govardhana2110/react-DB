@@ -1,0 +1,164 @@
+pipeline{
+    
+    
+  agent any 
+   tools {
+     maven 'Maven'
+     jdk 'JAVA'
+        }
+  
+    stages{
+	
+	
+	
+	stage('Config')
+	{
+	
+	 
+	
+		steps
+		{ 			
+				
+			            sh '''sed -i 's/^PORT=.*$/PORT=4000/g' .env'''
+                        sh '''sed -i 's/^NODE_ENV=.*$/NODE_ENV=production/g' .env'''
+						sh 'git branch '
+
+		}
+	
+	}
+		
+		
+	stage('Service Stop'){
+	    
+	    steps{
+	        
+	    sshPublisher(publishers: [sshPublisherDesc(configName: '71 selfcare', transfers: [sshTransfer(excludes: '', execCommand: '''cd /opt/tomcat/new-csmart-selfcare/
+		pm2 stop new_selfcare_4000
+		pm2 delete new_selfcare_4000''', execTimeout: 10000000000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+
+	    
+		}
+	}	
+	
+	
+	stage('Removing old copies '){
+	    
+	    steps{
+	        
+	    sshPublisher(publishers: [sshPublisherDesc(configName: '71 selfcare', transfers: [sshTransfer(excludes: '', execCommand: '''
+	     rm -rf /opt/jenkins/new-csmart-selfcare/* ''', execTimeout: 10000000000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+
+	    
+		}
+	}	
+
+	
+	stage('Deploy'){
+	    
+	    steps{
+	        
+			script{
+				try{
+				sshPublisher(publishers: [sshPublisherDesc(configName: '71 selfcare', transfers: [sshTransfer(excludes: '', execCommand: '''
+				cd /opt/jenkins/test-selfcare/backup/
+				rm -rf new-csmart-selfcare/
+				mv /opt/tomcat/new-csmart-selfcare/ /opt/jenkins/test-selfcare/backup/
+				cp -r /opt/jenkins/new-csmart-selfcare/ /opt/tomcat/
+				cd /opt/tomcat/new-csmart-selfcare/
+				yarn install --network-timeout 1000000000
+				yarn build
+				''', execTimeout: 10000000000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: true, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '**/*')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+
+				}
+				catch(err){
+				
+				 currentBuild.result ='FAILURE'
+				
+				}
+			}
+			
+			
+			
+				
+		
+	    }
+	}
+		
+
+
+	stage('run'){
+		steps{
+		
+			script{
+					try{
+					sshPublisher(publishers: [sshPublisherDesc(configName: '71 selfcare', transfers: [sshTransfer(excludes: '', execCommand: '''
+					cd /opt/tomcat/new-csmart-selfcare/
+					pm2 start yarn --interpreter bash --name "new_selfcare_4000" -- start
+					''', execTimeout: 10000000000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: true, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+
+					}
+					catch(err){
+					
+					 currentBuild.result ='FAILURE'
+					
+					}
+				}
+		
+		
+		}
+	
+	
+	
+	}
+       
+    
+}
+
+
+post {
+		   always {
+			   
+					script{
+			
+						if(currentBuild.result =='FAILURE'){
+						
+							script{
+							
+							sshPublisher(publishers: [sshPublisherDesc(configName: '71 selfcare', transfers: [sshTransfer(excludes: '', execCommand: '''
+							rm -rf /opt/tomcat/new-csmart-selfcare/
+							cp -r /opt/jenkins/test-selfcare/backup/new-csmart-selfcare/ /opt/tomcat/
+							cd /opt/tomcat/new-csmart-selfcare/
+						    pm2 start yarn --interpreter bash --name "new_selfcare_4000" -- start
+							''', execTimeout: 10000000000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: true, patternSeparator: '[, ]+', remoteDirectory: '', remoteDirectorySDF: false, removePrefix: '', sourceFiles: '')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+							
+							
+							}
+							
+							script{
+									emailext body: '''$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
+									deployed previous build
+									Check console output at $BUILD_URL to view the results.''', subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!', to: 'devid.sahu@covalensedigital.com'
+							}
+						}
+						
+						else{
+							echo "RESULT:${currentBuild.result}"
+							emailext body: '''$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
+							New Build is deployed successfully
+							Check console output at $BUILD_URL to view the results.''', subject: '$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!', to: 'devid.sahu@covalensedigital.com'
+			   
+						}
+					}
+			
+			}
+		
+		
+        
+    
+	}
+
+
+
+
+
+}

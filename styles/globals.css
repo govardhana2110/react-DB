@@ -1,0 +1,29 @@
+html,
+body {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+#__next {
+  height: 100%;
+}
+.leaflet-container {
+  height: 100%;
+  z-index: 1;
+}
+
+.leaflet-div-icon {
+  background-color: transparent;
+  border: 0;
+}
+/* @font-face {
+  font-family: 'Nexa-Book';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Nexa-Book'),
+    url('https://fonts.cdnfonts.com/s/16221/NexaBold.woff') format('woff');
+} */
